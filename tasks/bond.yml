@@ -1,0 +1,28 @@
+-   name: template bond members configuration
+    copy:
+        dest: "/etc/sysconfig/network-scripts/ifcfg-{{item}}"
+        content: |
+            DEVICE={{item}}
+            ONBOOT=yes
+            NM_CONTROLLED=no
+            BOOTPROTO=none
+            HOTPLUG=no
+    with_items: "{{ovs_bond_members}}"
+    notify: restart network
+
+-   name: template bond configuration
+    copy:
+        dest: /etc/sysconfig/network-scripts/ifcfg-{{ovs_name}}_b0
+        content: |
+            DEVICE={{ovs_name}}_bond0
+            NM_CONTROLLED=no
+            ONBOOT=yes
+            DEVICETYPE=ovs
+            OVS_BRIDGE={{ovs_name}}
+            BOOTPROTO=none
+            BOND_IFACES="{{' '.join(ovs_name)}}"
+            USERCTL=no
+            OVS_OPTIONS="bond_mode=balance-tcp lacp=active"
+            TYPE=OVSBond
+            MTU=2000
+    notify: restart network

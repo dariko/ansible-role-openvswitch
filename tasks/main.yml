@@ -1,0 +1,39 @@
+-   name: install rdo repo
+    yum:
+        name: https://rdo.fedorapeople.org/openstack/openstack-queens/rdo-release-queens.rpm
+
+-   name: install openvswitch
+    yum:
+        name: openvswitch
+        state: present
+
+-   name: start, enable openvswitch
+    service:
+        name: openvswitch
+        state: started
+        enabled: yes
+
+-   name: template bridge configuration
+    copy:
+        dest: "/etc/sysconfig/network-scripts/ifcfg-{{ovs_name}}"
+        content: |
+            DEVICE={{ovs_name}}
+            NM_CONTROLLED=no
+            USERCTL=no
+            ONBOOT=yes
+            TYPE=OVSBridge
+            DEVICETYPE=ovs
+            HOTPLUG=no
+            {% if ovs_address is defined %}
+            BOOTPROTO=none
+            IPADDR={{ovs_address|ipaddr('address')}}
+            NETMASK={{ovs_address|ipaddr('netmask')}}
+            {% else %}
+            BOOTPROTO=none
+            {%endif %}
+    notify: restart network
+
+
+
+-   import_tasks: bond.yml
+    when: ovs_bond_members != []
